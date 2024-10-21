@@ -219,4 +219,5 @@ resource "aws_budgets_budget" "total_spend" {
 # Enable Cost Management Hub
 #---------------------------#
 resource "aws_costoptimizationhub_enrollment_status" "enable" {
+  include_member_accounts = false
 }
