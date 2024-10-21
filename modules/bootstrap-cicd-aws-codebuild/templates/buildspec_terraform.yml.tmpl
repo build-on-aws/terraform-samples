@@ -25,7 +25,7 @@ phases:
       - echo "Fetching GitHub username for commit $GIT_COMMIT in $GH_ORG_REPO"
       - GITHUB_USER=$(curl -H "Authorization: token $GITHUB_TOKEN" \
                         -H "Accept: application/vnd.github.v3+json" \
-                        https://api.github.com/repos/$${GH_ORG_REPO}/commits/${GIT_COMMIT} \
+                        https://api.github.com/repos/$${GH_ORG_REPO}/commits/$${GIT_COMMIT} \
                         | jq -r '.author.login')
       
       - echo "Commit made by GitHub user: $GITHUB_USER"
