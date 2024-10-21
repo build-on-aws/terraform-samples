@@ -124,7 +124,7 @@ phases:
         
         echo "" >> build_job_pr_comment.md
 
-        echo "*Pusher: $${GITHUB_USER}, Action: $${CODEBUILD_SOURCE_VERSION}*" >> build_job_pr_comment.md
+        echo "*Author: @$${GITHUB_USER}, Action: $${CODEBUILD_SOURCE_VERSION}*" >> build_job_pr_comment.md
         
         BUILD_SUMMARY=$(cat build_job_pr_comment.md)
 
