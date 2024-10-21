@@ -1,0 +1,162 @@
+# Managed by the build-on-aws/terraform-samples/modules/bootstrap-cicd-github-actions
+# module. While changes won't be overwritten unless you run it locally and commit, 
+# it is recommended not to make changes to this file directly.
+name: "Terraform Workflows"
+run-name: $${{ github.actor }} running on a PR or merge 🚀
+
+on:
+  push:
+    branches:
+      - main  # When PRs are merged, run terraform apply
+    paths:
+      - '${terraform_source_dir}**'  # Only trigger on changes within the 'terraform/' folder, remove to trigger on every build
+  
+  pull_request:
+    branches:
+      - main  # For new / updated PRs, only run terraform plan
+    paths:
+      - '${terraform_source_dir}**'  # Only trigger on changes within the 'terraform/' folder, remove to trigger on every build
+        
+permissions:
+  id-token: write   # This is required for requesting the JWT to interact with AWS
+  contents: read    # This is required for actions/checkout
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Check out the code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Set up Terraform for the pipeline
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: $${{ env.TF_VERSION }}
+
+    # Set up the AWS credentials for this repo
+    - name: Configure AWS credentials PR (read-only)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: $${{ secrets.AWS_IAM_ROLE_PLAN }}
+        aws-region: ${aws_region}
+
+    # Initialize Terraform
+    - name: Terraform init
+      id: init
+      env:
+        GITHUB_TOKEN: $${{ secrets.GH_TOKEN }}
+      run: terraform init -no-color
+      working-directory: ${terraform_source_dir}
+      continue-on-error: true
+
+    # Ensure code is formatted correctly
+    - name: Terraform fmt
+      id: fmt
+      run: terraform fmt -check -no-color
+      working-directory: ${terraform_source_dir}
+      continue-on-error: true
+
+    # Validate the terraform code is valid
+    - name: Terraform validate
+      id: validate
+      run: terraform validate -no-color
+      working-directory: ${terraform_source_dir}
+      continue-on-error: true
+
+    # Generate the plan
+    - name: Terraform plan
+      id: plan
+      env:
+        GITHUB_TOKEN: $${{ secrets.GH_TOKEN }}
+      run: |
+        terraform plan -no-color -out=tfplan 2> error.log || export PLAN_EXIT_CODE=$?
+        
+        if [ $PLAN_EXIT_CODE -eq 1 ]; then
+          TERRAFORM_ERRORS=$(cat error.log)
+          
+          # Ensure to use a string that won't occur in the output
+          echo "plan_output<<ABCDEFGH" >> $GITHUB_OUTPUT
+          echo "## Terraform Plan" >> $GITHUB_OUTPUT
+          echo "<details><summary>Show Errors</summary>" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo '\`\`\`' >> $GITHUB_OUTPUT
+          echo "$TERRAFORM_ERRORS" >> $GITHUB_OUTPUT
+          echo '\`\`\`' >> $GITHUB_OUTPUT
+          echo "</details>" >> $GITHUB_OUTPUT
+          echo "ABCDEFGH" >> $GITHUB_OUTPUT
+          exit 1
+        else
+          TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+          
+          # Ensure to use a string that won't occur in the output
+          echo "plan_output<<ABCDEFGH" >> $GITHUB_OUTPUT
+          echo "## Terraform Plan" >> $GITHUB_OUTPUT
+          echo "<details><summary>Show Plan</summary>" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo '\`\`\`' >> $GITHUB_OUTPUT
+          echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
+          echo '\`\`\`' >> $GITHUB_OUTPUT
+          echo "</details>" >> $GITHUB_OUTPUT
+          echo "ABCDEFGH" >> $GITHUB_OUTPUT
+
+          exit 0
+        fi
+      working-directory: ${terraform_source_dir}
+      continue-on-error: true
+
+    # Write the status of prior steps as a comment on the PR
+    - name: Update PR with plan output and build status
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: $${{ secrets.GH_TOKEN }}
+        script: |
+          const build_summary = `|Step|Status|
+            |:---|:---|
+            |🖌 - Format and Style|\`$${{ steps.fmt.outcome }}\`|"
+            |⚙️ - Initialization|\`$${{ steps.init.outcome }}\`|"
+            |🤖 - Validation|\`$${{ steps.validate.outcome }}\`|"
+            |📖 - Plan|\`$${{ steps.plan.outcome }}\`|`;
+
+          const plan_output = `$${{ steps.plan.outputs.plan_output }}`;
+
+          const commit_details = `*Pusher: @$${{ github.actor }}, Action: \`$${{ github.event_name }}\`, Workflow: \`$${{ github.workflow }}\`*`;
+
+          // Build the output message
+          const output = `$${build_summary}\n\n$${plan_output}\n\n$${commit_details}`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          });
+
+    # After posting the PR output / status as a comment, exit with failure if any step failed
+    - name: Exit based on status of fmt, init, and validate
+      if: steps.init.outcome == 'failure' || steps.fmt.outcome == 'failure' || steps.validate.outcome == 'failure'
+      run: |
+        echo Init: $${{ steps.init.outcome }}
+        echo Format: $${{ steps.fmt.outcome }}
+        echo Validate: $${{ steps.validate.outcome }}
+        exit 1
+
+    # Set up the AWS credentials to allow changes if this is on the main branch
+    - name: Configure AWS credentials PR (read-only)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: $${{ secrets.AWS_IAM_ROLE_APPLY }}
+        aws-region: ${aws_region}
+
+    # Only apply if this is on the main branch (after merging)
+    - name: Terraform Apply
+      id: apply 
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      env:
+        GITHUB_TOKEN: $${{ secrets.GH_TOKEN }}
+      run: terraform apply -auto-approve -input=false
+      working-directory: ${terraform_source_dir}

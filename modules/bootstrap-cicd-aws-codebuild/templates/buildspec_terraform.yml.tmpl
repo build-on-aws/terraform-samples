@@ -1,0 +1,142 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - apk update && apk add unzip curl 
+%{ if is_pr_buildspec }
+      - apk add github-cli
+%{ endif }
+  pre_build:
+    commands:
+      # Check if the commit valid for this build
+      - |
+        echo "CODEBUILD_SOURCE_VERSION: $CODEBUILD_SOURCE_VERSION"
+        echo "CODEBUILD_INITIATOR: $CODEBUILD_INITIATOR"
+        export PR_NUMBER=$(echo "$CODEBUILD_SOURCE_VERSION" | cut -d'/' -f2)
+        echo "PR_NUMBER: $PR_NUMBER"
+        echo "GH_ORG_REPO: $GH_ORG_REPO"
+%{ if is_pr_buildspec }
+        if [[ "$${CODEBUILD_SOURCE_VERSION}" == pr/* ]]; then 
+          echo "Detected a PR, only doing a plan"
+        else 
+            echo "Detected a push to main branch, this should not happen, failing the build."
+            exit 1
+        fi
+%{ else}
+        if [[ "$${CODEBUILD_SOURCE_VERSION}" != pr/* ]]; then 
+          echo "Detected a commit to the main branch, applying changes"
+        else 
+            echo "Detected a PR, this should not happen, failing the build."
+            exit 1
+        fi
+%{ endif}
+
+  build:
+    commands:
+      - cd $${TF_WORKING_DIR}
+      - |
+        terraform init -no-color 2> init_error.log
+        export INIT_EXIT_CODE=$?
+        
+        terraform fmt -check -no-color 2> fmt_error.log
+        export FMT_EXIT_CODE=$?
+        
+        terraform validate -no-color 2> validate_error.log
+        export VALIDATE_EXIT_CODE=$?
+      
+        # Store the plan in tfplan, and any errors in plan_errors.log
+        terraform plan -no-color -out=tfplan 2> plan_error.log
+        export PLAN_EXIT_CODE=$?
+
+      # Print any errors
+      - |
+        if [ "$INIT_EXIT_CODE" -ne 0 ] || [ "$FMT_EXIT_CODE" -ne 0 ] || [ "$VALIDATE_EXIT_CODE" -ne 0 ] || [ "$PLAN_EXIT_CODE" -ne 0 ]; then
+          # Print the error to CodeBuild logs if init failed
+          if [ "$INIT_EXIT_CODE" -ne 0 ]; then
+            echo "💥💥💥 TERRAFORM INIT FAILED!!! 💥💥💥\n"
+            echo $(cat init_error.log)
+            echo "#--------------------------------#\n"
+          fi
+
+          # Print the error to CodeBuild logs if fmt failed
+          if [ "$FMT_EXIT_CODE" -ne 0 ]; then
+            echo "💥💥💥 TERRAFORM FMT FAILED!!! 💥💥💥\n"
+            echo $(cat fmt_error.log)
+            echo "#--------------------------------#\n"
+          fi 
+
+          # Print the error to CodeBuild logs if validate failed
+          if [ "$VALIDATE_EXIT_CODE" -ne 0 ]; then
+            echo "💥💥💥 TERRAFORM VALIDATE FAILED!!! 💥💥💥\n"
+            echo $(cat validate_error.log)
+            echo "#--------------------------------#\n"
+          fi
+          
+          # Print the error to CodeBuild logs if the plan failed
+          if [ "$PLAN_EXIT_CODE" -ne 0 ]; then
+            echo "💥💥💥 TERRAFORM PLAN FAILED!!! 💥💥💥\n"
+            echo $(cat plan_error.log)
+            echo "#--------------------------------#\n"
+          fi
+        fi
+%{ if is_pr_buildspec }
+      # Create the build summary and comment on the PR
+      - |
+        echo "|Step|Status|" > build_job_pr_comment.md
+        echo "|:---|:---|" >> build_job_pr_comment.md
+        echo "|🖌 - Format and Style|$([ "$${FMT_EXIT_CODE:-0}" -eq 0 ] && echo "Success" || echo "Failed")|" >> build_job_pr_comment.md
+        echo "|⚙️ - Initialization|$([ "$${INIT_EXIT_CODE:-0}" -eq 0 ] && echo "Success" || echo "Failed")|" >> build_job_pr_comment.md
+        echo "|🤖 - Validation|$([ "$${VALIDATION_EXIT_CODE:-0}" -eq 0 ] && echo "Success" || echo "Failed")|" >> build_job_pr_comment.md
+        echo "|📖 - Plan|$([ "$${PLAN_EXIT_CODE:-0}" -eq 0 ] && echo "Success" || echo "Failed")|" >> build_job_pr_comment.md
+        echo "" >> build_job_pr_comment.md
+
+        if [ "$PLAN_EXIT_CODE" -ne 0 ]; then
+          TERRAFORM_ERRORS=$(cat plan_error.log)
+          echo "## Terraform Plan" >> build_job_pr_comment.md
+          echo "<details><summary>Show Errors</summary>" >> build_job_pr_comment.md
+          echo "" >> build_job_pr_comment.md
+          echo '\`\`\`' >> build_job_pr_comment.md
+          echo "$TERRAFORM_ERRORS" >> build_job_pr_comment.md
+          echo '\`\`\`' >> build_job_pr_comment.md
+          echo "</details>" >> build_job_pr_comment.md
+        else
+          TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+          echo "## Terraform Plan" >> build_job_pr_comment.md
+          echo "<details><summary>Show Plan</summary>" >> build_job_pr_comment.md
+          echo "" >> build_job_pr_comment.md
+          echo '\`\`\`' >> build_job_pr_comment.md
+          echo "$TERRAFORM_PLAN" >> build_job_pr_comment.md
+          echo '\`\`\`' >> build_job_pr_comment.md
+          echo "</details>" >> build_job_pr_comment.md
+          echo "" >> build_job_pr_comment.md
+        fi
+ 
+        echo "*Pusher: $${CODEBUILD_INITIATOR}, Action: $${CODEBUILD_SOURCE_VERSION}*" >> build_job_pr_comment.md
+        
+        BUILD_SUMMARY=$(cat build_job_pr_comment.md)
+
+        # Post the comment to the PR using gh CLI
+        gh pr comment --repo $${GH_ORG_REPO} $${PR_NUMBER} --body "$BUILD_SUMMARY"
+%{ endif }
+      # Ensure job fails if there was an error
+      - |
+        if [ "$INIT_EXIT_CODE" -ne 0 ] || [ "$FMT_EXIT_CODE" -ne 0 ] || [ "$VALIDATE_EXIT_CODE" -ne 0 ] || [ "$PLAN_EXIT_CODE" -ne 0 ]; then
+          exit 1
+        fi
+%{ if !is_pr_buildspec }
+      # Now apply the changes
+      - |
+        terraform apply -auto-approve 2> apply_error.log
+        export APPLY_EXIT_CODE=$?
+
+      # Fail the job if apply failed and print the error
+      - |
+        if [ "$PLAN_EXIT_CODE" -ne 0 ]; then
+          echo "💥💥💥 TERRAFORM APPLY FAILED!!! 💥💥💥"
+          echo ""
+          echo $(cat apply_error.log)
+          echo ""
+          exit 1
+        fi
+%{ endif }
