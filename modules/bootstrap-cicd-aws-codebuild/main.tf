@@ -31,6 +31,16 @@ data "aws_ssm_parameter" "github_token" {
   name = local.aws_ssm_name_github_token
 }
 
+# Create the GitHub provider to use the GitHub token retrieved from SSM
+resource "local_file" "tf_github_provider" {
+  filename             = "${path.root}/provider-github.tf"
+  directory_permission = "0666"
+  file_permission      = "0666"
+  content = templatefile("${path.module}/templates/provider-github.tf.tmpl", {
+    github_organization = var.github_organization
+  })
+}
+
 # Set up access to GitHub using the token
 resource "aws_codebuild_source_credential" "github" {
   auth_type   = "PERSONAL_ACCESS_TOKEN"
