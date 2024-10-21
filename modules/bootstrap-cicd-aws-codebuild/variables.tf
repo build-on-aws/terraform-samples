@@ -53,12 +53,6 @@ variable "override_terraform_source_dir" {
   default     = null
 }
 
-variable "override_aws_github_token_ssm_name" {
-  description = "Override name of the AWS SSM location for the GitHub Token, defaults to /cicd/github_token"
-  type        = string
-  default     = null
-}
-
 variable "override_iam_role_name_codebuild_apply" {
   description = "Override the IAM role name used by CodeBuild for terraform apply, defaults to gh-<repo_name>-tf-apply"
   type        = string
