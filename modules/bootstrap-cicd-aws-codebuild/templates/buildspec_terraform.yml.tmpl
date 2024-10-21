@@ -96,23 +96,23 @@ phases:
           echo "## Terraform Plan" >> build_job_pr_comment.md
           echo "<details><summary>Show Errors</summary>" >> build_job_pr_comment.md
           echo "" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
+          echo '```' >> build_job_pr_comment.md
           echo "$TERRAFORM_ERRORS" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
+          echo '```' >> build_job_pr_comment.md
           echo "</details>" >> build_job_pr_comment.md
         else
           TERRAFORM_PLAN=$(terraform show -no-color tfplan)
           echo "## Terraform Plan" >> build_job_pr_comment.md
           echo "<details><summary>Show Plan</summary>" >> build_job_pr_comment.md
           echo "" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
+          echo '```' >> build_job_pr_comment.md
           echo "$TERRAFORM_PLAN" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
+          echo '```' >> build_job_pr_comment.md
           echo "</details>" >> build_job_pr_comment.md
           echo "" >> build_job_pr_comment.md
         fi
  
-        echo "*Pusher: $${CODEBUILD_INITIATOR}, Action: $${CODEBUILD_SOURCE_VERSION}*" >> build_job_pr_comment.md
+        // echo "*Pusher: $${CODEBUILD_INITIATOR}, Action: $${CODEBUILD_SOURCE_VERSION}*" >> build_job_pr_comment.md
         
         BUILD_SUMMARY=$(cat build_job_pr_comment.md)
 

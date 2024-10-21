@@ -238,8 +238,10 @@ resource "aws_codebuild_project" "terraform_plan" {
   }
 
   source {
-    type     = "GITHUB"
-    location = "https://github.com/${var.github_organization}/${var.github_repository}"
+    type                = "GITHUB"
+    location            = "https://github.com/${var.github_organization}/${var.github_repository}"
+    report_build_status = true
+
     buildspec = templatefile("${path.module}/templates/${local.codebuild_spec_template_filename}",
       {
         is_pr_buildspec                = true
@@ -289,8 +291,10 @@ resource "aws_codebuild_project" "terraform_apply" {
   }
 
   source {
-    type     = "GITHUB"
-    location = "https://github.com/${var.github_organization}/${var.github_repository}"
+    type                = "GITHUB"
+    location            = "https://github.com/${var.github_organization}/${var.github_repository}"
+    report_build_status = true
+    
     buildspec = templatefile("${path.module}/templates/${local.codebuild_spec_template_filename}",
       {
         is_pr_buildspec                = false
