@@ -18,17 +18,18 @@ phases:
         echo "GH_ORG_REPO: $GH_ORG_REPO"
 
       # Get the commit hash that triggered the build
-      - GIT_COMMIT=$(git rev-parse HEAD)
-      - echo "Commit hash: $GIT_COMMIT"
+      - |
+        GIT_COMMIT=$(git rev-parse HEAD)
+        echo "Commit hash: $GIT_COMMIT"
       
       # Fetch the GitHub username of the person who made the commit using GitHub API
-      - echo "Fetching GitHub username for commit $GIT_COMMIT in $GH_ORG_REPO"
-      - GITHUB_USER=$(curl -H "Authorization: token $GITHUB_TOKEN" \
+      - |
+        echo "Fetching GitHub username for commit $GIT_COMMIT in $GH_ORG_REPO"
+        GITHUB_USER=$(curl -H "Authorization: token $GITHUB_TOKEN" \
                         -H "Accept: application/vnd.github.v3+json" \
                         https://api.github.com/repos/$${GH_ORG_REPO}/commits/$${GIT_COMMIT} \
                         | jq -r '.author.login')
-      
-      - echo "Commit made by GitHub user: $GITHUB_USER"
+        echo "Commit made by GitHub user: $GITHUB_USER"
               
 %{ if is_pr_buildspec }
         if [[ "$${CODEBUILD_SOURCE_VERSION}" == pr/* ]]; then 
