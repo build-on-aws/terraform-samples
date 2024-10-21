@@ -2,9 +2,9 @@
 # Using locals instead of hard-coding strings
 #--------------------------------------------#
 locals {
-  tf_version                     = coalesce(var.override_tf_version, "1.9.7")
-  state_lock_table_name          = coalesce(var.override_state_lock_table_name, "terraform-state-lock")
-  kms_key_alias                  = coalesce(var.override_kms_key_alias, "alias/aws/s3")
+  tf_version            = coalesce(var.override_tf_version, "1.9.7")
+  state_lock_table_name = coalesce(var.override_state_lock_table_name, "terraform-state-lock")
+  kms_key_alias         = coalesce(var.override_kms_key_alias, "alias/aws/s3")
 
   aws_tags = coalesce(var.override_aws_tags, {
     Name   = "tf-bootstrap",
@@ -183,40 +183,13 @@ resource "local_file" "terraform_tf" {
   file_permission      = "0666"
 }
 
-# Generate the versions.tf to specify the providers to use with minimum versions
-resource "local_file" "versions_tf" {
-  filename = "${path.root}/versions.tf"
-  content = templatefile("${path.module}/templates/versions.tf.tmpl", {
+# Generate the providers.tf to specify the providers to use with minimum versions
+resource "local_file" "providers_tf" {
+  filename = "${path.root}/providers.tf"
+  content = templatefile("${path.module}/templates/providers.tf.tmpl", {
     tf_version = local.tf_version
     providers  = local.provider_config
   })
   directory_permission = "0666"
   file_permission      = "0666"
-}
-
-#-----------------------------------#
-# Set up a Budget and Billing aleart
-#-----------------------------------#
-resource "aws_budgets_budget" "total_spend" {
-  name         = "budget-monthly"
-  budget_type  = "COST"
-  limit_amount = var.budget_alert_amount
-  limit_unit   = var.budget_alert_currency
-  time_unit    = "MONTHLY"
-
-  notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = var.budget_alert_threshold_percentage
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "FORECASTED"
-    subscriber_email_addresses = [var.budget_email_address]
-  }
-
-  tags = local.aws_tags
-}
-
-#---------------------------#
-# Enable Cost Management Hub
-#---------------------------#
-resource "aws_costoptimizationhub_enrollment_status" "enable" {
 }

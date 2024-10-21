@@ -5,7 +5,7 @@ locals {
   codebuild_image_uri              = coalesce(var.override_terraform_build_image_uri, "public.ecr.aws/hashicorp/terraform:${var.codebuild_terraform_version}")
   kms_key_alias                    = coalesce(var.override_kms_key_alias, "alias/aws/s3")
   codebuild_compute_type           = "BUILD_GENERAL1_SMALL"
-  repo_source_files_bucket_name    = coalesce(var.override_repo_source_files_bucket_name, "src-${lower(var.github_organization)}-${lower(var.github_repository)}")
+  repo_source_files_bucket_name    = coalesce(var.override_repo_source_files_bucket_name, "gh-codebuild-${lower(var.github_organization)}-${lower(var.github_repository)}")
   terraform_source_dir             = coalesce(var.override_terraform_source_dir, "terraform/")
   repository_default_branch_name   = coalesce(var.override_repository_default_branch_name, "main")
   iam_role_name_codebuild_plan     = coalesce(var.override_iam_role_name_codebuild_plan, "gh-${substr(var.github_repository, 0, 64 - length("gh--tf-apply"))}-tf-plan")
@@ -228,8 +228,10 @@ resource "aws_codebuild_project" "terraform_plan" {
   }
 
   source {
-    type     = "GITHUB"
-    location = "https://github.com/${var.github_organization}/${var.github_repository}"
+    type                = "GITHUB"
+    location            = "https://github.com/${var.github_organization}/${var.github_repository}"
+    report_build_status = true
+
     buildspec = templatefile("${path.module}/templates/${local.codebuild_spec_template_filename}",
       {
         is_pr_buildspec                = true
@@ -279,8 +281,10 @@ resource "aws_codebuild_project" "terraform_apply" {
   }
 
   source {
-    type     = "GITHUB"
-    location = "https://github.com/${var.github_organization}/${var.github_repository}"
+    type                = "GITHUB"
+    location            = "https://github.com/${var.github_organization}/${var.github_repository}"
+    report_build_status = true
+
     buildspec = templatefile("${path.module}/templates/${local.codebuild_spec_template_filename}",
       {
         is_pr_buildspec                = false

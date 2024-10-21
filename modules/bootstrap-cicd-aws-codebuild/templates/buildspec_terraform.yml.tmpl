@@ -1,9 +1,13 @@
+# Managed by the build-on-aws/terraform-samples/modules/bootstrap-cicd-aws-codebuild
+# module. While changes won't be overwritten unless you run it locally and commit, 
+# it is recommended not to make changes to this file directly.
+
 version: 0.2
 
 phases:
   install:
     commands:
-      - apk update && apk add unzip curl 
+      - apk update && apk add unzip curl jq
 %{ if is_pr_buildspec }
       - apk add github-cli
 %{ endif }
@@ -16,6 +20,21 @@ phases:
         export PR_NUMBER=$(echo "$CODEBUILD_SOURCE_VERSION" | cut -d'/' -f2)
         echo "PR_NUMBER: $PR_NUMBER"
         echo "GH_ORG_REPO: $GH_ORG_REPO"
+
+      # Get the commit hash that triggered the build
+      - |
+        GIT_COMMIT=$(git rev-parse HEAD)
+        echo "Commit hash: $GIT_COMMIT"
+      
+      # Fetch the GitHub username of the person who made the commit using GitHub API
+      - |
+        echo "Fetching GitHub username for commit $GIT_COMMIT in $GH_ORG_REPO"
+        GITHUB_USER=$(curl -H "Authorization: token $GITHUB_TOKEN" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        https://api.github.com/repos/$${GH_ORG_REPO}/commits/$${GIT_COMMIT} \
+                        | jq -r '.author.login')
+        echo "Commit made by GitHub user: $GITHUB_USER"
+              
 %{ if is_pr_buildspec }
         if [[ "$${CODEBUILD_SOURCE_VERSION}" == pr/* ]]; then 
           echo "Detected a PR, only doing a plan"
@@ -92,27 +111,24 @@ phases:
         echo "" >> build_job_pr_comment.md
 
         if [ "$PLAN_EXIT_CODE" -ne 0 ]; then
-          TERRAFORM_ERRORS=$(cat plan_error.log)
-          echo "## Terraform Plan" >> build_job_pr_comment.md
-          echo "<details><summary>Show Errors</summary>" >> build_job_pr_comment.md
-          echo "" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
-          echo "$TERRAFORM_ERRORS" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
-          echo "</details>" >> build_job_pr_comment.md
+          TERRAFORM_PLAN_HEADER="Show Errors"
+          TERRAFORM_PLAN_OUTPUT=$(cat plan_error.log)
         else
-          TERRAFORM_PLAN=$(terraform show -no-color tfplan)
-          echo "## Terraform Plan" >> build_job_pr_comment.md
-          echo "<details><summary>Show Plan</summary>" >> build_job_pr_comment.md
-          echo "" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
-          echo "$TERRAFORM_PLAN" >> build_job_pr_comment.md
-          echo '\`\`\`' >> build_job_pr_comment.md
-          echo "</details>" >> build_job_pr_comment.md
-          echo "" >> build_job_pr_comment.md
+          TERRAFORM_PLAN_HEADER="Show Plan"
+          TERRAFORM_PLAN_OUTPUT=$(terraform show -no-color tfplan)
         fi
- 
-        echo "*Pusher: $${CODEBUILD_INITIATOR}, Action: $${CODEBUILD_SOURCE_VERSION}*" >> build_job_pr_comment.md
+
+        echo "## Terraform Plan" >> build_job_pr_comment.md
+        echo "<details><summary>$${TERRAFORM_PLAN_HEADER}</summary>" >> build_job_pr_comment.md
+        echo "" >> build_job_pr_comment.md
+        echo '```' >> build_job_pr_comment.md
+        echo "$TERRAFORM_PLAN_OUTPUT" >> build_job_pr_comment.md
+        echo '```' >> build_job_pr_comment.md
+        echo "</details>" >> build_job_pr_comment.md
+        
+        echo "" >> build_job_pr_comment.md
+
+        echo "*Author: @$${GITHUB_USER}, Action: $${CODEBUILD_SOURCE_VERSION}*" >> build_job_pr_comment.md
         
         BUILD_SUMMARY=$(cat build_job_pr_comment.md)
 

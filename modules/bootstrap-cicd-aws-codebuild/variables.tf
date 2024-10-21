@@ -18,6 +18,11 @@ variable "codebuild_terraform_version" {
   type        = string
 }
 
+variable "state_file_iam_policy_arn" {
+  description = "(Required) ARN of the IAM policy that allows reading & writing to the state file S3 bucket"
+  type        = string
+}
+
 variable "override_repo_source_files_bucket_name" {
   description = "Override the S3 bucket name for the repo source file, defaults to src_<git_org>_<github_repo>"
   type        = string
@@ -44,12 +49,6 @@ variable "override_repository_default_branch_name" {
 
 variable "override_terraform_source_dir" {
   description = "Override the directory in the repo where the terraform code is, defaults to terraform/ - please include trailing slash in override"
-  type        = string
-  default     = null
-}
-
-variable "override_aws_github_token_ssm_name" {
-  description = "Override name of the AWS SSM location for the GitHub Token, defaults to /cicd/github_token"
   type        = string
   default     = null
 }
