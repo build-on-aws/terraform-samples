@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - apk update && apk add unzip curl 
+      - apk update && apk add unzip curl jq
 %{ if is_pr_buildspec }
       - apk add github-cli
 %{ endif }
