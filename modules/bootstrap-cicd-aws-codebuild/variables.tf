@@ -18,6 +18,11 @@ variable "codebuild_terraform_version" {
   type        = string
 }
 
+variable "state_file_iam_policy_arn" {
+  description = "(Required) ARN of the IAM policy that allows reading & writing to the state file S3 bucket"
+  type        = string
+}
+
 variable "override_repo_source_files_bucket_name" {
   description = "Override the S3 bucket name for the repo source file, defaults to src_<git_org>_<github_repo>"
   type        = string

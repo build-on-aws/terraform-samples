@@ -2,7 +2,7 @@
 # Using locals instead of hard-coding strings
 #--------------------------------------------#
 locals {
-  tf_version                     = coalesce(var.override_tf_version, "1.9.7")
+  tf_version = coalesce(var.override_tf_version, "1.9.7")
 
   aws_tags = coalesce(var.override_aws_tags, {
     Name   = "tf-bootstrap",
@@ -23,8 +23,8 @@ resource "aws_cloudtrail" "all_accounts" {
 }
 
 resource "aws_s3_bucket" "cloudtrail" {
-  bucket        = var.cloudtrail_bucket_name
-  tags          = local.aws_tags
+  bucket = var.cloudtrail_bucket_name
+  tags   = local.aws_tags
 }
 
 data "aws_iam_policy_document" "cloudtrail_bucket" {

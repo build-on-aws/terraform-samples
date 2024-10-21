@@ -2,9 +2,9 @@
 # Using locals instead of hard-coding strings
 #--------------------------------------------#
 locals {
-  tf_version                     = coalesce(var.override_tf_version, "1.9.7")
-  state_lock_table_name          = coalesce(var.override_state_lock_table_name, "terraform-state-lock")
-  kms_key_alias                  = coalesce(var.override_kms_key_alias, "alias/aws/s3")
+  tf_version            = coalesce(var.override_tf_version, "1.9.7")
+  state_lock_table_name = coalesce(var.override_state_lock_table_name, "terraform-state-lock")
+  kms_key_alias         = coalesce(var.override_kms_key_alias, "alias/aws/s3")
 
   aws_tags = coalesce(var.override_aws_tags, {
     Name   = "tf-bootstrap",
