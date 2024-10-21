@@ -10,6 +10,13 @@ locals {
   })
 }
 
+#----------------------------------#
+# Retrieve account id and partition
+#----------------------------------#
+data "aws_caller_identity" "current" {}
+
+data "aws_partition" "current" {}
+
 #------------------#
 # Set up CloudTrail
 #------------------#
