@@ -4,8 +4,8 @@ Sets up the required resources for Terraform to use Amazon S3 as a backend. Will
 
 1. **S3 bucket:** stores the state file, encrypted with KMS, and with versioning enabled
 2. **DynamoDB table:** state file locking table
-3. **terraform.tf:** local file with the S3 backend configuration values specified
-4. **providers.tf:** defines the versions for Terraform, AWS, and Local provider to use
+3. **`terraform.tf`:** local file with the S3 backend configuration values specified
+4. **`providers.tf`:** defines the versions for Terraform, AWS, and Local provider to use
 
 ## Minimum configuration
 
