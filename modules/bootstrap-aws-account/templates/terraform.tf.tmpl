@@ -8,7 +8,7 @@ terraform {
     region         = "${state_file_aws_region}"
     encrypt        = true
     kms_key_id     = "${kms_key_id}"
-    dynamodb_table = "${dynamodb_table}"%{ if var.profile_name != null }
+    dynamodb_table = "${dynamodb_table}"%{ if profile_name != null }
     profile        = "${profile_name}"%{ endif }
   }
 }
