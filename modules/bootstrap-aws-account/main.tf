@@ -184,10 +184,10 @@ resource "local_file" "terraform_tf" {
   file_permission      = "0666"
 }
 
-# Generate the providers.tf to specify the providers to use with minimum versions
-resource "local_file" "providers_tf" {
-  filename = "${path.root}/providers.tf"
-  content = templatefile("${path.module}/templates/providers.tf.tmpl", {
+# Generate the versions.tf to specify the providers to use with minimum versions
+resource "local_file" "versions_tf" {
+  filename = "${path.root}/versions.tf"
+  content = templatefile("${path.module}/templates/versions.tf.tmpl", {
     tf_version = local.tf_version
     providers  = local.provider_config
   })
