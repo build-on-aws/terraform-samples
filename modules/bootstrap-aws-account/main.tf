@@ -178,6 +178,7 @@ resource "local_file" "terraform_tf" {
     aws_region             = var.state_file_aws_region
     kms_key_id             = local.kms_key_alias
     dynamodb_table         = aws_dynamodb_table.state_file_lock_table.name
+    profile_name           = var.state_file_profile_name
   })
   directory_permission = "0666"
   file_permission      = "0666"

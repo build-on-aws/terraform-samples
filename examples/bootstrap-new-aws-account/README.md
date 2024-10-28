@@ -70,7 +70,7 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
     1. Create a file with a `.tf` extension, we'll be using `bootstrap.tf`, and add the following to it:
         1. **`state_file_aws_region`** - Change to your region, this is where the state file bucket will be
         2. **`state_file_bucket_name`** - Change to the name you want to use for the state file bucket - S3 bucket names are globally unique. If you want to make sure the name is available, you can open up the S3 section in the AWS console, and create the bucket, then delete it again - just make sure it is in the region you are using in this file, otherwise you will need to wait 45-60 minutes for the name to become available again.
-        3. **`aws_region`** - Region to use for creating the rest of our infrastructure.
+        3. **`aws_region`** - Region to use for creating the rest of our infrastructure. (**Update 2024-10-28:** The `aws_region` input variable is not needed, if you are following along with the video, please remove it. It won't break anything as it isn't being used at all.)
 
             ```terraform
             module "bootstrap" {
@@ -78,7 +78,6 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
 
                 state_file_aws_region  = "us-west-2"
                 state_file_bucket_name = "name-for-the-state-file-bucket"
-                aws_region             = "us-west-2"
             }
             ```
 

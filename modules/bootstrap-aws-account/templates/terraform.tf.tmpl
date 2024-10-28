@@ -5,9 +5,10 @@ terraform {
   backend "s3" {
     bucket         = "${state_file_bucket_name}"
     key            = "${state_file_bucket_key}"
-    region         = "${aws_region}"
+    region         = "${state_file_aws_region}"
     encrypt        = true
     kms_key_id     = "${kms_key_id}"
-    dynamodb_table = "${dynamodb_table}"
+    dynamodb_table = "${dynamodb_table}"%{ if var.profile_name != null }
+    profile        = "${profile_name}"%{ endif }
   }
 }

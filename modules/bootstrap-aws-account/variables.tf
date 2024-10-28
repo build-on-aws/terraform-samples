@@ -16,13 +16,19 @@ variable "state_file_aws_region" {
 }
 
 variable "aws_region" {
-  description = "(Required) Primary AWS region to create resources in"
+  description = "(Deprecated) Not used, leaving for backward compatibility"
   type        = string
+  default     = null
 }
 
+variable "state_file_profile_name" {
+  description = "(Optional) Name of the AWS profile to use for the state file S3 bucket"
+  type        = string
+  default     = null
+}
 
 variable "tf_additional_providers" {
-  description = "List of additional Terraform providers"
+  description = "(Optional) List of additional Terraform providers"
   type = list(object({
     name             = string
     provider_source  = string
@@ -32,37 +38,37 @@ variable "tf_additional_providers" {
 }
 
 variable "override_state_lock_table_name" {
-  description = "Override name of the DynamoDB table to use for locking while updating, defaults to terraform-state-lock"
+  description = "(Optional) Override name of the DynamoDB table to use for locking while updating, defaults to terraform-state-lock"
   type        = string
   default     = null
 }
 
 variable "override_aws_tags" {
-  description = "Override tags to apply to AWS resources"
+  description = "(Optional) Override tags to apply to AWS resources"
   type        = map(string)
   default     = null
 }
 
 variable "override_kms_key_alias" {
-  description = "Override KMS key alias to use for state file encryption, defaults to alias/kms/s3"
+  description = "(Optional) Override KMS key alias to use for state file encryption, defaults to alias/kms/s3"
   type        = string
   default     = null
 }
 
 variable "override_tf_version" {
-  description = "Override version of Terraform to use, defaults to 1.9.7 if not set"
+  description = "(Optional) Override version of Terraform to use, defaults to 1.9.7 if not set"
   type        = string
   default     = null
 }
 
 variable "override_aws_provider_version" {
-  description = "Override version of AWS provider to use, defaults to 5.70.0 if not set"
+  description = "(Optional) Override version of AWS provider to use, defaults to 5.70.0 if not set"
   type        = string
   default     = null
 }
 
 variable "override_local_provider_version" {
-  description = "Override version of local provider to use, defaults to 2.5.2 if not set"
+  description = "(Optional) Override version of local provider to use, defaults to 2.5.2 if not set"
   type        = string
   default     = null
 }
