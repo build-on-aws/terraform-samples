@@ -222,7 +222,7 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
 
     5. Go to repository on [GitHub](https://github.com), it should have a message about the new branch, and ask if you want to create a pull request - do that. If you don't see the message, you can go to "branches", select the `add-identity-center` one, and from there create a PR.
     6. Once the PR has been created, you should see the CodeBuild job start with a yellow status indicator. Once it has completed without errors and printed out output of the build as a comment on the PR, you can merge the PR. Here's what the message should look like:
-      ![Comment on a GitHub PR with a markdown table with the status for init, fmt, validate, plan all showing successful, and expandable section to show the Terraform plan, and the username of the PR author / Action that triggered CodeBuild](github-pr-message-codebuild.png)
+      ![Comment on a GitHub PR with a markdown table with the status for init, fmt, validate, plan all showing successful, and expandable section to show the Terraform plan, and the username of the PR author / Action that triggered CodeBuild](./images/github-pr-message-codebuild.png)
     7. Nice! You now have users that can log into the AWS account using SSO and the AWS access portal URL you set earlier - please note that each user would need to follow the Forgot Password flow to set it for the first time.
 
 11. Next, we will set up an AWS CloudTrail to allow tracking all user and API activity in our account.
