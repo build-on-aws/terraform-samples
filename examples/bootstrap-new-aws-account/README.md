@@ -201,7 +201,7 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
         }
 
         module "aws-iam-identity-center" {
-        source = "aws-ia/iam-identity-center/aws"
+            source = "aws-ia/iam-identity-center/aws"
 
             # Use local variables for groups, users, permission sets, and account assignments
             sso_groups          = local.sso_groups
