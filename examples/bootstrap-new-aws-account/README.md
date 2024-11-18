@@ -107,7 +107,7 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
 
             github_organization       = "your org | github username"
             github_repository         = "your repo name"
-            aws_region                = module.bootstrap.aws_region_for_resources
+            aws_region                = "us-east-2"
             state_file_iam_policy_arn = module.bootstrap.state_file_iam_policy_arn
 
             codebuild_terraform_version = "1.9.7"
