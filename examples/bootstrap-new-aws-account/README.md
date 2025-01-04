@@ -234,7 +234,14 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
         git checkout -b add-cloudtrail
         ```
 
-    2. Create a new file in the `terraform/` folder called `cloudtrail.tf` with the following contents:
+    2. In CloudShell, enable service access for CloudTrail by executing the following command to allow CloudTrail integration with AWS Organizations:
+
+        ```bash
+        aws organizations enable-aws-service-access \
+            --service-principal cloudtrail.amazonaws.com
+        ```
+
+    3. Create a new file in the `terraform/` folder called `cloudtrail.tf` with the following contents:
 
         ```terraform
         module "bootstrap_cloudtrail" {
@@ -246,9 +253,9 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
         }
         ```
 
-    3. Run `terraform init` to download the new module used.
-    4. Confirm there aren't any syntax / other errors by running `terraform plan`.
-    5. If there are no errors, commit the change, and push the branch with:
+    4. Run `terraform init` to download the new module used.
+    5. Confirm there aren't any syntax / other errors by running `terraform plan`.
+    6. If there are no errors, commit the change, and push the branch with:
 
         ```bash
         git add .
@@ -256,9 +263,9 @@ Steps to follow along the YouTube video on setting up a new AWS account with - d
         git push --set-upstream origin add-cloudtrail
         ```
 
-    6. Go to your repo on [GitHub](https://github.com), and create a new PR from this branch.
-    7. Wait for the CodeBuild job to finish, then confirm there weren't any errors by looking a the message that is posted to the PR.
-    8. If there aren't any errors, merge the branch.
+    7. Go to your repo on [GitHub](https://github.com), and create a new PR from this branch.
+    8. Wait for the CodeBuild job to finish, then confirm there weren't any errors by looking a the message that is posted to the PR.
+    9. If there aren't any errors, merge the branch.
 12. Almost done, in the home stretch now! We want to add one more resource: a Budget with a Billing Alert to notify us in case we approach a monthly spend we want to monitor.
     1. In CloudShell, switch to the `main` branch, `git pull` the latest changes (we just merged a PR, so our local `main` won't be up to date with that merge), then create a new branch for the Budget. You can use the following commands to do this:
 
