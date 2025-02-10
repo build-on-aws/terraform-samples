@@ -1,6 +1,6 @@
 ## Bootstrapping a new AWS account
 
-Steps to follow along the YouTube video on setting up a new AWS account with - do not action any of the steps below, the order is important covered further down under [steps to follow](#steps-to-follow):
+Steps to follow along the [YouTube video](https://www.youtube.com/watch?v=3XfgGFdoybE) on setting up a new AWS account with - do not action any of the steps below, the order is important covered further down under [steps to follow](#steps-to-follow):
 
 1. [Setting the MFA on your root account](https://us-east-1.console.aws.amazon.com/iam/home#/security_credentials)
 2. [Enabling AWS Cost Explorer](https://us-east-1.console.aws.amazon.com/costmanagement/home#/cost-explorer)
